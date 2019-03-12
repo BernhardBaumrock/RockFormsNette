@@ -12,5 +12,5 @@ $info = array(
   'singular' => true,
   'autoload' => true,
   'icon' => 'list',
-  'requires' => ['RockMigrations'],
+  'requires' => [],
 );
