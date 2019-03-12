@@ -1,5 +1,6 @@
 <?php namespace ProcessWire;
 use \Nette\Forms\Form;
+use \Nette\Utils\Html;
 /**
  * RockFormsNette
  *
@@ -32,6 +33,29 @@ class RockFormsNette extends WireData implements Module {
   }
 
   /**
+   * API is ready.
+   *
+   * @return void
+   */
+  public function ready() {
+    $this->addHookBefore("render", $this, "applyFormRenderer", ['priority' => 50]);
+  }
+
+  /**
+   * Apply renderer to this form.
+   *
+   * @param HookEvent $event
+   * @return void
+   */
+  public function applyFormRenderer($event) {
+    $form = $event->arguments(1);
+    $this->files->include(__DIR__ . "/renderers/uikit2.php", [
+      'rf' => $this,
+      'form' => $form,
+    ]);
+  }
+
+  /**
    * Create and add a new form.
    * 
    * This will try to load a file located at /site/assets/RockFormsNette/$name.php
@@ -49,9 +73,35 @@ class RockFormsNette extends WireData implements Module {
 
     // create form
     $form = new Form($name);
+
+    // save the default renderer for later
     $this->defaultRenderer = $form->getRenderer();
-    $form->setRenderer(new RockFormsRenderer($this));
+
+    // add the new renderer that attaches hookable methods
+    $this->form = $form;
+
+    $renderer = $form->getRenderer();
+    // $renderer->wrappers['controls']['container'] = null;
+    // $renderer->wrappers['pair']['container'] = 'div';
+    // $renderer->wrappers['error']['container'] = 'div class="uk-alert-danger" uk-alert';
+    // $renderer->wrappers['error']['item'] = 'div';
+
+    $renderer->wrappers['control']['errorcontainer'] = 'span class="uk-alert-danger uk-margin-small-left"';
+    $renderer->wrappers['control']['erroritem'] = '';
+
+    // $renderer->wrappers['label']['container'] = 'div class=uk-form-label';
+    // $renderer->wrappers['control']['container'] = 'div class="uk-form-controls uk-margin-small"';
+
+    $renderer = new RockFormsRenderer($this);
+    $form->setRenderer($renderer);
+
+    // add class to all forms
+    $form->getElementPrototype()->addClass('RockFormsNette');
+
+    // add CSRF protection to this form
     $form->addProtection('Security token has expired, please submit the form again');
+
+    // todo: add honeypots
 
     // load the form setup file
     if(is_file($file)) $this->files->include($file, ['rf' => $this, 'form' => $form]);
@@ -67,8 +117,14 @@ class RockFormsNette extends WireData implements Module {
     return $form;
   }
 
-  public function ___render($method, ...$variables): string {
-    return $this->defaultRenderer->{$method}(...$variables);
+  /**
+   * Render the whole form.
+   * 
+   * @param string $name
+   * @param Form $form
+   */
+  public function ___render($name, $form): string {
+    return $this->defaultRenderer->render($form);
   }
 
   /**
