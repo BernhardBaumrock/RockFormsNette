@@ -8,11 +8,8 @@ use \Nette\Utils\Html;
  * @license Licensed under MIT
  */
 require_once('vendor/autoload.php');
-require_once('RockFormsRenderer.php');
 require_once('RockFormsNetteForm.php');
 class RockFormsNette extends WireData implements Module {
-
-  public $name;
 
   /**
    * Array of all forms.
@@ -20,11 +17,6 @@ class RockFormsNette extends WireData implements Module {
    * @var WireArray
    */
   public $forms;
-
-  /**
-   * Default Nette Forms Renderer
-   */
-  private $defaultRenderer;
 
   /**
    * Initialize the module (optional)
@@ -40,7 +32,7 @@ class RockFormsNette extends WireData implements Module {
    */
   public function ready() {
     // apply form renderer early
-    $this->addHookBefore("render", $this, "applyFormRenderer", ['priority' => 50]);
+    // $this->addHookBefore("render", $this, "applyFormRenderer", ['priority' => 50]);
 
     // apply hookable processInput method right before rendering
     $this->addHookBefore("render", function($event) {
@@ -51,19 +43,19 @@ class RockFormsNette extends WireData implements Module {
     }, ['priority' => 999]);
   }
 
-  /**
-   * Apply renderer to this form.
-   *
-   * @param HookEvent $event
-   * @return void
-   */
-  public function applyFormRenderer($event) {
-    $form = $event->arguments(1);
-    $this->files->include(__DIR__ . "/renderers/uikit2.php", [
-      'rf' => $this,
-      'form' => $form,
-    ]);
-  }
+  // /**
+  //  * Apply renderer to this form.
+  //  *
+  //  * @param HookEvent $event
+  //  * @return void
+  //  */
+  // public function applyFormRenderer($event) {
+  //   $form = $event->arguments(1);
+  //   $this->files->include(__DIR__ . "/renderers/uikit2.php", [
+  //     'rf' => $this,
+  //     'form' => $form,
+  //   ]);
+  // }
 
   /**
    * Create and add a new form.
@@ -82,36 +74,7 @@ class RockFormsNette extends WireData implements Module {
     if($this->getForm($name)) throw new WireException("A form with name $name already exists");
 
     // create form
-    $form = new RockFormsNetteForm($name);
-
-    // save the default renderer for later
-    $this->defaultRenderer = $form->getRenderer();
-
-    // add the new renderer that attaches hookable methods
-    $this->form = $form;
-
-    $renderer = $form->getRenderer();
-    // $renderer->wrappers['controls']['container'] = null;
-    // $renderer->wrappers['pair']['container'] = 'div';
-    // $renderer->wrappers['error']['container'] = 'div class="uk-alert-danger" uk-alert';
-    // $renderer->wrappers['error']['item'] = 'div';
-
-    $renderer->wrappers['control']['errorcontainer'] = 'span class="uk-alert-danger uk-margin-small-left"';
-    $renderer->wrappers['control']['erroritem'] = '';
-
-    // $renderer->wrappers['label']['container'] = 'div class=uk-form-label';
-    // $renderer->wrappers['control']['container'] = 'div class="uk-form-controls uk-margin-small"';
-
-    $renderer = new RockFormsRenderer($this);
-    $form->setRenderer($renderer);
-
-    // add class to all forms
-    $form->getElementPrototype()->addClass('RockFormsNette');
-
-    // add CSRF protection to this form
-    $form->addProtection('Security token has expired, please submit the form again');
-
-    // todo: add honeypots
+    $form = new RockFormsNetteForm($name, $this);
 
     // load the form setup file
     if(is_file($file)) $this->files->include($file, ['rf' => $this, 'form' => $form]);
@@ -126,26 +89,6 @@ class RockFormsNette extends WireData implements Module {
     // return the created form
     return $form;
   }
-
-  /**
-   * Render the whole form.
-   * 
-   * @param string $name
-   * @param Form $form
-   */
-  public function ___render($name, $form): string {
-    return $this->defaultRenderer->render($form);
-  }
-
-  /**
-   * Hook to process input of the form.
-   * Executed right before every form render.
-   *
-   * @param string $name
-   * @param Form $form
-   * @return void
-   */
-  public function ___processInput($name, $form) {}
 
   /**
    * Get form with given name.

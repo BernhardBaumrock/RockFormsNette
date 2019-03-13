@@ -20,14 +20,24 @@ class RockFormsNetteForm extends Wire {
   private $nette;
 
   /**
+   * RockFormsNette instance.
+   *
+   * @var RockFormsNette
+   */
+  private $rf;
+
+  /**
    * Class constructor.
    *
    * @param string $name
    */
-  public function __construct($name) {
+  public function __construct($name, $rf) {
     // create nette form
     $this->nette = new Form($name);
+    $this->rf = $rf;
   }
+
+  // ########## magic methods to proxy everything to nette forms ##########
   
   /**
    * Proxy for properties.
@@ -36,6 +46,8 @@ class RockFormsNetteForm extends Wire {
    * @return void
    */
   public function __get($var) {
+    // if property "wire" is accessed we proxy to the wire instance
+    if($var == "wire") return parent::__get($var);
     return $this->nette->{$var};
   }
 
@@ -55,8 +67,12 @@ class RockFormsNetteForm extends Wire {
       if($this->nette->isSubmitted()) {
         $this->processInput($this->nette->name, $this->nette);
       }
+
+      // apply custom renderer
+      $this->beforeRender($this->nette->name, $this->nette);
     }
 
+    // call the requested method on the nette form object
     return $this->nette->{$method}(...$args);
   }
 
@@ -70,5 +86,75 @@ class RockFormsNetteForm extends Wire {
   }
 
   // ########## hookable methods ##########
+
+  /**
+   * Process input of submitted form.
+   * Does not do anything. Only exists to be hooked.
+   *
+   * @param string $name
+   * @param Form $form
+   * @return void
+   */
   public function ___processInput($name, $form) {}
+
+  /**
+   * Modify the rendering of the form.
+   *
+   * @param string $name
+   * @param Form $form
+   * @return void
+   */
+  public function ___beforeRender($name, $form) {
+    
+    // save the default renderer for later
+    $renderer = $form->getRenderer();
+    // $renderer->wrappers['controls']['container'] = null;
+    // $renderer->wrappers['pair']['container'] = 'div';
+    // $renderer->wrappers['error']['container'] = 'div class="uk-alert-danger" uk-alert';
+    // $renderer->wrappers['error']['item'] = 'div';
+
+    $renderer->wrappers['control']['errorcontainer'] = 'span class="uk-alert-danger uk-margin-small-left"';
+    $renderer->wrappers['control']['erroritem'] = '';
+
+    // $renderer->wrappers['label']['container'] = 'div class=uk-form-label';
+    // $renderer->wrappers['control']['container'] = 'div class="uk-form-controls uk-margin-small"';
+
+    // add class to all forms
+    $form->getElementPrototype()->addClass('RockFormsNette');
+
+    // add CSRF protection to this form
+    $form->addProtection('Security token has expired, please submit the form again');
+
+    // todo: add honeypots
+    $this->addHoneypots($name, $form);
+
+    // apply framework specific styling
+    // todo: make this hookable or editable via config setting
+    $this->wire->files->include(__DIR__ . "/renderers/uikit2.php", [
+      'rf' => $this->rf,
+      'form' => $form,
+    ]);
+  }
+
+  /**
+   * Add honeypot fields to this form.
+   *
+   * @param string $name
+   * @param Form $form
+   * @return void
+   */
+  public function ___addHoneypots($name, $form) {
+    bd("add honey to $name");
+  }
+
+  // ########## other ##########
+
+  /**
+   * debugInfo
+   *
+   * @return array
+   */
+  public function __debugInfo() {
+    return (array)$this->nette;
+  }
 }
