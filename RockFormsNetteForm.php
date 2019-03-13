@@ -12,7 +12,12 @@ use \Nette\Forms\Form;
  */
 class RockFormsNetteForm extends Wire {
 
-  private $form;
+  /**
+   * Nette form instance.
+   *
+   * @var Form
+   */
+  private $nette;
 
   /**
    * Class constructor.
@@ -42,6 +47,16 @@ class RockFormsNetteForm extends Wire {
    * @return void
    */
   public function __call($method, $args) {
+    if(method_exists($this, "___$method")) return parent::__call($method, $args);
+    
+    // apply hooks
+    if($method == 'render') {
+      // if the form was submitted we execute the hookable processInput method
+      if($this->nette->isSubmitted()) {
+        $this->processInput($this->nette->name, $this->nette);
+      }
+    }
+
     return $this->nette->{$method}(...$args);
   }
 
@@ -51,6 +66,9 @@ class RockFormsNetteForm extends Wire {
    * @return string
    */
   public function __toString() {
-    return (string)$this->nette;
+    return (string)$this->render();
   }
+
+  // ########## hookable methods ##########
+  public function ___processInput($name, $form) {}
 }
