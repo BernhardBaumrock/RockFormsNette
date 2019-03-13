@@ -38,7 +38,16 @@ class RockFormsNette extends WireData implements Module {
    * @return void
    */
   public function ready() {
+    // apply form renderer early
     $this->addHookBefore("render", $this, "applyFormRenderer", ['priority' => 50]);
+
+    // apply hookable processInput method right before rendering
+    $this->addHookBefore("render", function($event) {
+      $this->processInput(
+        $event->arguments(0), // form name
+        $event->arguments(1) // form
+      );
+    }, ['priority' => 999]);
   }
 
   /**
@@ -126,6 +135,16 @@ class RockFormsNette extends WireData implements Module {
   public function ___render($name, $form): string {
     return $this->defaultRenderer->render($form);
   }
+
+  /**
+   * Hook to process input of the form.
+   * Executed right before every form render.
+   *
+   * @param string $name
+   * @param Form $form
+   * @return void
+   */
+  public function ___processInput($name, $form) {}
 
   /**
    * Get form with given name.
