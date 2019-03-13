@@ -34,6 +34,8 @@ class RockFormsNetteForm extends Wire {
   public function __construct($name, $rf) {
     // create nette form
     $this->nette = new Form($name);
+    $this->created($name, $this->nette);
+
     $this->rf = $rf;
   }
 
@@ -63,13 +65,13 @@ class RockFormsNetteForm extends Wire {
     
     // apply hooks
     if($method == 'render') {
+      // apply custom renderer
+      $this->beforeRender($this->nette->name, $this->nette);
+
       // if the form was submitted we execute the hookable processInput method
       if($this->nette->isSubmitted()) {
         $this->processInput($this->nette->name, $this->nette);
       }
-
-      // apply custom renderer
-      $this->beforeRender($this->nette->name, $this->nette);
     }
 
     // call the requested method on the nette form object
@@ -96,6 +98,15 @@ class RockFormsNetteForm extends Wire {
    * @return void
    */
   public function ___processInput($name, $form) {}
+    
+  /**
+   * Hook when form is created.
+   *
+   * @param string $name
+   * @param Form $form
+   * @return void
+   */
+  public function ___created($name, $form) {}
 
   /**
    * Modify the rendering of the form.
