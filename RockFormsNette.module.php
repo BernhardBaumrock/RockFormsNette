@@ -9,6 +9,7 @@ use \Nette\Utils\Html;
  */
 require_once('vendor/autoload.php');
 require_once('RockFormsRenderer.php');
+require_once('RockFormsNetteForm.php');
 class RockFormsNette extends WireData implements Module {
 
   public $name;
@@ -81,7 +82,7 @@ class RockFormsNette extends WireData implements Module {
     if($this->getForm($name)) throw new WireException("A form with name $name already exists");
 
     // create form
-    $form = new Form($name);
+    $form = new RockFormsNetteForm($name);
 
     // save the default renderer for later
     $this->defaultRenderer = $form->getRenderer();
