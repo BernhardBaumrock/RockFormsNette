@@ -65,9 +65,14 @@ class RockFormsNette extends WireData implements Module {
    *
    * @param string $name
    * @param string $file
+   * @param array $properties
+   * Here you can set runtime properties for this form. This can be necessary
+   * if you use forms in other modules. Eg RockCommerce needs to apply the current
+   * module instance to the form so that it is accessible in hooks.
+   * 
    * @return void
    */
-  public function addForm($name = null, $file = null) {
+  public function addForm($name = null, $file = null, $properties = []) {
     if(!$name) $name = uniqid();
     
     // check if a form with the current name already exists
@@ -75,6 +80,9 @@ class RockFormsNette extends WireData implements Module {
 
     // create form
     $form = new RockFormsNetteForm($name, $this);
+
+    // apply runtime properties
+    foreach($properties as $k=>$v) $form->{$k} = $v;
 
     // load the form setup file
     if(is_file($file)) $this->files->include($file, ['rf' => $this, 'form' => $form]);
