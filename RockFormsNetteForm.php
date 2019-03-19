@@ -17,7 +17,7 @@ class RockFormsNetteForm extends Wire {
    *
    * @var Form
    */
-  private $nette;
+  public $nette;
 
   /**
    * RockFormsNette instance.
@@ -158,13 +158,10 @@ class RockFormsNetteForm extends Wire {
     $honeypots = $rf->getHoneypots();
     if(!count($honeypots)) return;
 
-    // add honeypots to their own group
-    $honey = $form->addContainer('nettehny');
-
     // add fields
     foreach($honeypots as $item) {
       if(!$item) continue;
-      $honey->addText($item)
+      $form->addText($item)
         ->addRule($form::BLANK, __('Leave this field empty!'))
         ->setOmitted(true)
         ->setAttribute('class', 'nettehny')
