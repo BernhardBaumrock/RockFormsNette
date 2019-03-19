@@ -33,9 +33,9 @@ class RockFormsNetteForm extends Wire {
    */
   public function __construct($name, $rf) {
     // create nette form
-    $this->nette = new Form($name);
-    $this->created($name, $this->nette);
-
+    $form = $this->nette = new Form($name);
+    $this->created($name, $form);
+    $this->addHoneypots($name, $form, $rf);
     $this->rf = $rf;
   }
 
@@ -136,9 +136,6 @@ class RockFormsNetteForm extends Wire {
     // add CSRF protection to this form
     $form->addProtection('Security token has expired, please submit the form again');
 
-    // todo: add honeypots
-    $this->addHoneypots($name, $form);
-
     // apply framework specific styling
     // todo: make this hookable or editable via config setting
     $this->wire->files->include(__DIR__ . "/renderers/uikit2.php", [
@@ -152,10 +149,28 @@ class RockFormsNetteForm extends Wire {
    *
    * @param string $name
    * @param Form $form
+   * @param RockFormsNette $rf
    * @return void
    */
-  public function ___addHoneypots($name, $form) {
-    bd("add honey to $name");
+  public function addHoneypots($name, $form, $rf) {
+    // add honeypot fields
+    // this is now done manually
+    $honeypots = $rf->getHoneypots();
+    if(!count($honeypots)) return;
+
+    // add honeypots to their own group
+    $honey = $form->addContainer('nettehny');
+
+    // add fields
+    foreach($honeypots as $item) {
+      if(!$item) continue;
+      $honey->addText($item)
+        ->addRule($form::BLANK, __('Leave this field empty!'))
+        ->setOmitted(true)
+        ->setAttribute('class', 'nettehny')
+        ->setAttribute('autocomplete', 'off')
+        ;
+    };
   }
 
   // ########## other ##########

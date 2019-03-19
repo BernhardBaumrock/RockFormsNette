@@ -26,6 +26,15 @@ class RockFormsNette extends WireData implements Module {
   }
 
   /**
+   * Get all honeypot fields as array.
+   *
+   * @return array
+   */
+  public function getHoneypots() {
+    return explode("\n", $this->honeypots);
+  }
+
+  /**
    * API is ready.
    *
    * @return void
