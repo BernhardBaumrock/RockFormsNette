@@ -149,7 +149,7 @@ class RockFormsNetteForm extends Wire {
    */
   public function ___renderSummary($options = []) {
     $form = $this->nette;
-    $out = '<table>';
+    $out = '';
     
     // skip
     $skip = @$options['skip'] ?: [];
@@ -158,6 +158,7 @@ class RockFormsNetteForm extends Wire {
     // loop all controls
     foreach ($form->getControls() as $control) {
       $type = $control->getOption('type');
+      $row = '';
 
       // skip this control?
       if(in_array($control->name, $skip)) continue;
@@ -165,23 +166,23 @@ class RockFormsNetteForm extends Wire {
       // add row
       if($type == 'text') {
         if(!$control->value AND @!$options['showEmpty']) continue;
-        $out .= "<td style='padding-right: 15px;'>{$control->caption}</td>";
-        $out .= "<td>{$control->value}</td>";
+        $row .= "<td style='padding-right: 15px;'>{$control->caption}</td>";
+        $row .= "<td>{$control->value}</td>";
       }
       elseif($type == 'checkbox') {
-        $out .= "<td colspan=2>" . $control->caption . ": " . ($control->value ? 'Ja' : 'Nein') . "</td>";
+        $row .= "<td colspan=2>" . $control->caption . ": " . ($control->value ? 'Ja' : 'Nein') . "</td>";
       }
       elseif($type == 'radio') {
-        $out .= "<td style='padding-right: 15px;'>{$control->caption}</td>";
-        $out .= "<td>{$control->items[$control->value]}</td>";
+        $row .= "<td style='padding-right: 15px;'>{$control->caption}</td>";
+        $row .= "<td>{$control->items[$control->value]}</td>";
       }
       else {
         continue;
       }
-      $out = "<tr data-name='{$control->name}'>$out</tr>";
+      $out .= "<tr data-name='{$control->name}'>$row</tr>";
     }
-    $out .= "</table>";
-    return $out;
+
+    return "<table>$out</table>";
   }
 
   /**
