@@ -24,7 +24,7 @@ class RockFormsNetteForm extends Wire {
    *
    * @var RockFormsNette
    */
-  private $rf;
+  public $rf;
 
   /**
    * Class constructor.
@@ -64,14 +64,9 @@ class RockFormsNetteForm extends Wire {
     if(method_exists($this, "___$method")) return parent::__call($method, $args);
     
     // apply hooks
-    if($method == 'render') {
+    elseif($method == 'render') {
       // apply custom renderer
       $this->beforeRender($this->nette->name, $this->nette);
-
-      // if the form was submitted we execute the hookable processInput method
-      if($this->nette->isSubmitted()) {
-        $this->processInput($this->nette->name, $this->nette);
-      }
     }
 
     // call the requested method on the nette form object
@@ -97,7 +92,9 @@ class RockFormsNetteForm extends Wire {
    * @param Form $form
    * @return void
    */
-  public function ___processInput($name, $form) {}
+  public function ___processInput($data) {
+    return $data;
+  }
     
   /**
    * Hook when form is created.
@@ -142,6 +139,49 @@ class RockFormsNetteForm extends Wire {
       'rf' => $this->rf,
       'form' => $form,
     ]);
+  }
+
+  /**
+   * Render summary of this form (eg in E-Mails).
+   *
+   * @param array $options
+   * @return string
+   */
+  public function ___renderSummary($options = []) {
+    $form = $this->nette;
+    $out = '<table>';
+    
+    // skip
+    $skip = @$options['skip'] ?: [];
+    $skip = array_merge(['_form_'], $this->rf->getHoneypots(), $skip);
+
+    // loop all controls
+    foreach ($form->getControls() as $control) {
+      $type = $control->getOption('type');
+
+      // skip this control?
+      if(in_array($control->name, $skip)) continue;
+
+      // add row
+      if($type == 'text') {
+        if(!$control->value AND @!$options['showEmpty']) continue;
+        $out .= "<td style='padding-right: 15px;'>{$control->caption}</td>";
+        $out .= "<td>{$control->value}</td>";
+      }
+      elseif($type == 'checkbox') {
+        $out .= "<td colspan=2>" . $control->caption . ": " . ($control->value ? 'Ja' : 'Nein') . "</td>";
+      }
+      elseif($type == 'radio') {
+        $out .= "<td style='padding-right: 15px;'>{$control->caption}</td>";
+        $out .= "<td>{$control->items[$control->value]}</td>";
+      }
+      else {
+        continue;
+      }
+      $out = "<tr data-name='{$control->name}'>$out</tr>";
+    }
+    $out .= "</table>";
+    return $out;
   }
 
   /**
