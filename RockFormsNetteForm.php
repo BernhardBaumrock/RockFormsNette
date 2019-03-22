@@ -176,6 +176,11 @@ class RockFormsNetteForm extends Wire {
         $row .= "<td style='padding-right: 15px;'>{$control->caption}</td>";
         $row .= "<td>{$control->items[$control->value]}</td>";
       }
+      elseif($type == 'textarea') {
+        if(!$control->value AND @!$options['showEmpty']) continue;
+        $row .= "<td style='padding-right: 15px; vertical-align: top;'>{$control->caption}</td>";
+        $row .= "<td>" . nl2br($control->value) . "</td>";
+      }
       else {
         continue;
       }
